@@ -1,32 +1,21 @@
-import requests
-from urllib.parse import urlparse
+import subprocess
 
-def fetch_pull_request_files(url):
-    parsed_url = urlparse(url)
-    path_parts = parsed_url.path.split("/")
-    owner = path_parts[1]
-    repo = path_parts[2]
-    pull_number = path_parts[4]
-    
-    api_url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pull_number}/files"
-    
-    response = requests.get(api_url)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print(f"Failed to fetch pull request files. Status code: {response.status_code}")
-        return None
+def fetch_and_checkout_branch(repo_name, branch_name):
+    # Fetch the latest changes from the specified branch
+    subprocess.run(['git', 'fetch', repo_name, branch_name])
 
-def main():
-    pr_url = input("Enter the GitHub pull request URL: ")
+    # Checkout the specified branch
+    subprocess.run(['git', 'checkout', branch_name])
 
-    files = fetch_pull_request_files(pr_url)
-    if files:
-        print("Files in the pull request:")
-        for file in files:
-            print(file["filename"])
-    else:
-        print("Failed to fetch pull request files.")
+def print_changes(repo_name, branch_name):
+    # Print the changes between the specified branch and master
+    print("\n===== Code Changes =====\n")
+    output = subprocess.check_output(['git', 'diff', 'main', f'{branch_name}'])
+    print(output)
 
 if __name__ == "__main__":
-    main()
+    repo_name = input("Enter the name of the repository: ")
+    branch_name = input("Enter the name of the branch you want to compare with master: ")
+
+    fetch_and_checkout_branch(repo_name, branch_name)
+    print_changes(repo_name, branch_name)
